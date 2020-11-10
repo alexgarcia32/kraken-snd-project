@@ -67,3 +67,4 @@ def read_fake(filepath):
             news['ENs'][k]["RWORDS"][k2] = [sum(news['ENs'][k]["RWORDS"][k2]["sent"]) / lenlist, lenlist,
                                             news['ENs'][k]["RWORDS"][k2]["_POS"]]
     return news
+

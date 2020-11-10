@@ -1,22 +1,15 @@
 import os
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_samples, silhouette_score
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-
 from scipy.spatial import distance
 import scipy
 import copy
-
 from sklearn import metrics
 import pandas as pd
-from sklearn.datasets import load_iris
 from sklearn.cluster import DBSCAN
-from sklearn.cluster import SpectralClustering
-from sklearn.cluster import AgglomerativeClustering
 
 
 
@@ -270,131 +263,3 @@ def dbscan_clustering(data, epsilon, min_samples, graph_labels, graph_y_n):
     return dbscan_labels, dbscan_n_clusters, dbscan_n_noise, var_exp, label_fake, prob_fake
 
 
-
-################################################################################################
-###########                       FUNCTIONS SPECTRAL CLUSTERING                      ###########
-################################################################################################
-#https://jakevdp.github.io/PythonDataScienceHandbook/05.11-k-means.html
-#data = iris
-
-
-
-def spectral_clustering(data,n_cluster,graph_labels):
-    # assign_labels=‘discretize’ it is less sensitive to random initialization than kmeans
-    # Instead of using knn, we can use kernels
-    # data is a similarity/affinity matrix
-
-    model = SpectralClustering(n_clusters=n_cluster,n_init=10, affinity='precomputed',
-                               assign_labels='discretize') # assign_labels=‘discretize’
-    spectral_labels = model.fit_predict(data)
-
-    pca = PCA(n_components=2)
-    pca_2d = pca.fit_transform(data)
-    var_exp = pca.explained_variance_ratio_
-
-    graph_df = pd.DataFrame(data=pca_2d, columns=['PC1', 'PC2'])
-    graph_df['News'] = graph_df.index
-    graph_df.set_index("News", inplace=True)
-    # For labels
-    news = list(graph_df.index)
-
-    if graph_labels == "all":
-        plt.scatter(graph_df.iloc[:, 0], graph_df.iloc[:, 1], c=spectral_labels, s=50, cmap='viridis')
-        for i, txt in enumerate(news):
-            plt.annotate(txt, (graph_df.iloc[i, 0], graph_df.iloc[i, 1]))
-        plt.title("Spectral clustering: Visualization of the clustered data")
-        plt.xlabel("PCA 1")
-        plt.ylabel("PCA 2")
-        plt.show()
-    else:
-        plt.scatter(graph_df.iloc[:, 0], graph_df.iloc[:, 1], c=spectral_labels, s=50, cmap='viridis')
-        plt.title("Spectral clustering: Visualization of the clustered data")
-        plt.xlabel("PCA 1")
-        plt.ylabel("PCA 2")
-        plt.show()
-
-    return spectral_labels, var_exp
-
-
-################################################################################################
-###########                    FUNCTIONS HIERARCHICAL CLUSTERING                     ###########
-################################################################################################
-#
-
-def Hierarchical_clustering(data,n_cluster,graph_labels):
-    agg = AgglomerativeClustering(n_clusters=n_cluster, affinity='precomputed', linkage='average')
-    agg.fit_predict(data)
-    agg_labels = agg.labels_
-
-    pca = PCA(n_components=2)
-    pca_2d = pca.fit_transform(data)
-    var_exp = pca.explained_variance_ratio_
-
-    graph_df = pd.DataFrame(data=pca_2d, columns=['PC1', 'PC2'])
-    graph_df['News'] = graph_df.index
-    graph_df.set_index("News", inplace=True)
-    # For labels
-    news = list(graph_df.index)
-
-    if graph_labels == "all":
-        plt.scatter(graph_df.iloc[:, 0], graph_df.iloc[:, 1], c=agg_labels, s=50, cmap='viridis')
-        for i, txt in enumerate(news):
-            plt.annotate(txt, (graph_df.iloc[i, 0], graph_df.iloc[i, 1]))
-        plt.title("Hierarchical clustering: Visualization of the clustered data")
-        plt.xlabel("PCA 1")
-        plt.ylabel("PCA 2")
-        plt.show()
-    else:
-        plt.scatter(graph_df.iloc[:, 0], graph_df.iloc[:, 1], c=agg_labels, s=50, cmap='viridis')
-        plt.title("Hierarchical clustering: Visualization of the clustered data")
-        plt.xlabel("PCA 1")
-        plt.ylabel("PCA 2")
-        plt.show()
-
-    return agg_labels, var_exp
-
-
-
-################################################################################################
-################################################################################################
-###########################                   RUNNING                ###########################
-################################################################################################
-################################################################################################
-
-
-# path = 'C:/Users/Carmen/PycharmProjects/classifier/data'
-# os.chdir(path)
-# sim_m = pd.read_csv("MatrizSimilaridad_Dia_2019-09-26.csv",sep=";",decimal=",",header=0,index_col=0)
-# sim_m.index.name = 'News'
-# sim_m_basic = pd.read_csv("SIMPLE_MatrizSimilaridad_Dia_2019-09-26.csv",sep=";",decimal=",",header=0,index_col=0)
-# sim_m_basic.index.name = 'News'
-# data = pd.DataFrame.as_matrix(sim_m_basic)
-#
-#
-#
-# ## DBSCAN
-# epsilon=0.8
-# min_samples=3
-# data1= 1-data
-# dbscan_labels,dbscan_n_clusters,dbscan_n_noise,var_exp = dbscan_clustering(data1,epsilon,min_samples,None)
-#
-#
-#
-# ## Spectral clustering
-#
-#
-# ## Hierarchical clustering
-#
-# from scipy.cluster.hierarchy import dendrogram
-# import scipy.cluster.hierarchy as shc
-#
-# plt.figure(figsize=(10, 7))
-# plt.title("Customer Dendograms")
-# dend = shc.dendrogram(shc.linkage(data1, method='average',metric="euclidean"))
-# plt.show()
-#
-# n_cluster = 3
-# Hierarchical_clustering(data1,n_cluster,None)
-#
-#
-#

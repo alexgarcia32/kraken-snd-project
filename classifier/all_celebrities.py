@@ -88,17 +88,12 @@ for i in range(0, len(list_EN_true) - 1):
         n_true_news.append(n_times)
         #list_EN_n.append([list_EN_true[i], [n_times]])
 
-#list_EN = list_EN[1:] #SOLO PARA 4
-len(list_EN)
-#dic_result_celeb = dict(list_EN_n)
-
 
 index = list_EN
 columns = ["n_true_news","n_fake_news","tp","fp","tn","fn","Precision","Recall","F1","Accuracy"]
 df_celeb = pd.DataFrame(index=index, columns=columns)
 df_celeb.index.name = "Celebrity"
-df_celeb["n_true_news"] = n_true_news # n_true_news[1:]  SOLO PARA 4
-#df_celeb = df_celeb.fillna()
+df_celeb["n_true_news"] = n_true_news
 
 
 
@@ -118,7 +113,7 @@ df_celeb["n_fake_news"] = n_fake_news
 
 ## Fixing parameters
 min_common_en = 1
-component_selector = [0.5, 1, 1, 1, 1, 1, 0]
+component_selector = [1, 1, 1, 1, 1, 1, 0]
 Dice_intersection__intensity = 4
 ### Loop for all celebrities
 
@@ -202,10 +197,7 @@ for i in range(0, len(list_EN)):
     #dic_result_celeb[list_EN[i]].append(confusion_matrix)
 
 
-
-
 df_celeb
-df_celeb.to_csv('results_celeb_new_processing_comp_primera05.csv', index=True)
 
 
 

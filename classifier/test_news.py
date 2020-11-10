@@ -1,16 +1,16 @@
 import glob
 import os
 import sys
-sys.path.append(os.path.abspath('../kraken-snd/knowledge-graph-builder/'))
-sys.path.append(os.path.abspath('../kraken-snd/classifier/'))
+sys.path.append(os.path.abspath('../../knowledge-graph-builder/'))
+sys.path.append(os.path.abspath('/'))
 from lectura import previous_filter, read_fake
 import dill as pickle
 from filter_related_news import knowledge_filtered_fake
 from similarity import similarity
-from classifier.ClusteringWithDistanceMatrix import dbscan_clustering, DBSCAN_parameters_epsilon_minsamples
+from ClusteringWithDistanceMatrix import dbscan_clustering, DBSCAN_parameters_epsilon_minsamples
 import numpy as np
 import pandas as pd
-
+from sklearn.metrics import auc
 
 ## Function to read test news from a directory
 def read_directory(folder,nNews):
@@ -65,7 +65,7 @@ def create_dictionary():
                 if k2 == "http://dbpedia.org/resource/Boris_Yeltsin":
                     k["ENs"]["http://dbpedia.org/resource/Boris_Johnson"] = k["ENs"].pop('http://dbpedia.org/resource/Boris_Yeltsin')
 
-    with open('experiments/E5_26sept_buenas/E5_26sept', 'wb') as fich:
+    with open('../experiments/E5_26sept_buenas/E5_26sept', 'wb') as fich:
         # Step 3
         pickle.dump(a, fich)
 
@@ -76,7 +76,7 @@ def create_dictionary():
                 if k2 == "http://dbpedia.org/resource/Boris_Yeltsin":
                     k["ENs"]["http://dbpedia.org/resource/Boris_Johnson"] = k["ENs"].pop('http://dbpedia.org/resource/Boris_Yeltsin')
 
-    with open('experiments/E5_02oct_buenas/E5_02oct', 'wb') as fich:
+    with open('../experiments/E5_02oct_buenas/E5_02oct', 'wb') as fich:
         # Step 3
         pickle.dump(b, fich)
 
@@ -86,7 +86,7 @@ def create_dictionary():
             for k2,v in list(k["ENs"].items()):
                 if k2 == "http://dbpedia.org/resource/Boris_Yeltsin":
                     k["ENs"]["http://dbpedia.org/resource/Boris_Johnson"] = k["ENs"].pop('http://dbpedia.org/resource/Boris_Yeltsin')
-    with open('experiments/E5_08oct_buenas/E5_08oct', 'wb') as fich:
+    with open('../experiments/E5_08oct_buenas/E5_08oct', 'wb') as fich:
         # Step 3
         pickle.dump(c, fich)
 
@@ -167,7 +167,6 @@ def testing_news(d, test_news, threshold_prob_fake, min_common_en, component_sel
     count_predictions_NotFake = valid_tested_news - count_predictions_Fake
 
     return count_predictions_Fake, count_predictions_NotFake, predictions_Fake, predictions_Fake_value
-
 
 def measures_differents_threshold(prob_fakes_values_T,prob_fakes_values_F):
 
@@ -282,7 +281,7 @@ def measures_selected_threshold(prob_fakes_values_T,prob_fakes_values_F,threshol
 ## Function to calculate the threshold than maximize F1 score and minimize its variance among the three days
 def min_var_f1_global():
     # We have already saved the list of threshold and, for the three days, the list of the F1 score
-    df_f1_scores = pd.read_csv('../classifier/experiments/F1_score_3days_python.csv', header=0, sep=";", decimal=",")
+    df_f1_scores = pd.read_csv('../experiments/F1_score_3days_python.csv', header=0, sep=";", decimal=",")
     # We calculate variance and mean
     df_f1_scores['mean_f1_score'] = df_f1_scores[["Day1", "Day2", "Day3"]].mean(axis=1)
     df_f1_scores['var_f1_score'] = df_f1_scores[["Day1", "Day2", "Day3"]].var(axis=1)
@@ -303,3 +302,5 @@ def min_var_f1_global():
     optimum_var_f1_score = df_f1_scores_sorted.iloc[0, 1]
 
     return df_f1_scores_sorted, list_optimum_threshold, optimum_mean_f1_score, optimum_var_f1_score
+
+

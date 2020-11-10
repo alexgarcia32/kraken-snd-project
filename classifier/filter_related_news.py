@@ -49,31 +49,3 @@ def knowledge_filtered_fake(df,min_common_en,fake_news_dict):
         raise ValueError("Recommended min_common_en is between 1 and 3")
 
     return knowledge_filtered,  error
-
-# Knowledge graph: df
-# Fake news:
-# fake_news_dict = news
-# # Threshold indicating minimum number of EN in common admitted
-# min_common_en = 1
-#
-# knowledge_filtered = knowledge_filtered_fake(df,min_common_en,fake_news_dict)
-# news
-# ## Juntamos
-# knowledge_filtered[news["SOURCE"]] = news
-
-
-
-# # ENs of the fake news
-# fake_news_en = fake_news_dict["ENs"].keys()
-#
-# for news in list(df.keys()): # for news in knowledge graph
-#     news_en = df[news]["ENs"].keys()
-#     # Intersection
-#     intersection = set(fake_news_en) & set(news_en)
-#     common_en = len(intersection)
-#     # We delete news satisfying the following condition
-#     if common_en<min_common_en :
-#         del knowledge_filtered[news]
-#     else: # If they don't satisfy the previous condition, we add the number of EN in common with fake news
-#         knowledge_filtered[news]["COMMON_EN_WITH_FAKE"] = common_en
-#

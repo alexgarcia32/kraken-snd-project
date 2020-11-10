@@ -5,27 +5,26 @@
 import os
 import sys
 import pandas as pd
-import glob
-sys.path.append(os.path.abspath('../kraken-snd/knowledge-graph-builder/'))
-sys.path.append(os.path.abspath('../kraken-snd/classifier/'))
+
+sys.path.append(os.path.abspath('../../knowledge-graph-builder/'))
+sys.path.append(os.path.abspath('../'))
 from fake_news.neo4j_conn import KnowledgeGraph
-from classifier.test_news import read_directory_dictionary, testing_news, measures_differents_threshold, measures_selected_threshold, read_directory, min_var_f1_global
-import dill as pickle
+from classifier.test_news import read_directory_dictionary
 
-
-from lectura import previous_filter, read_fake
+from lectura import previous_filter
 from filter_related_news import knowledge_filtered_fake
-from similarity import similarity, similarity_or_distance_graph, export_csv
-from classifier.ClusteringWithDistanceMatrix import dbscan_predict, dbscan_clustering, DBSCAN_parameters_epsilon_minsamples, prob_noise_points
-
+from similarity import similarity
+from classifier.ClusteringWithDistanceMatrix import dbscan_clustering, DBSCAN_parameters_epsilon_minsamples
 
 #########################################################################
 ########                  LOAD KNOWLEDGE GRAPH                   ########
 #########################################################################
+# for covid
+# terminal:
+# ssh -L 7687:10.100.18.78:7688 -N kraken@193.147.61.144
 NEO4J_HOST = os.getenv('NEO4J_HOST', default='bolt://localhost:7687')
 NEO4J_USER = os.getenv('NEO4J_USER', default='neo4j')
 NEO4J_PASS = os.getenv('NEO4J_PASS', default='')
-
 kg = KnowledgeGraph(NEO4J_HOST, NEO4J_USER, NEO4J_PASS)
 date='2020-03-19'
 
@@ -33,61 +32,6 @@ date='2020-03-19'
 d_original = kg.get_sentiments_magic_method(date)
 ## deepcopy of the original dictionary to make changes in it
 d = dict(d_original)
-
-
-
-
-#########################################################################################
-########                  CHECKING IF CORONAVIRUS IS AN ENTITY                   ########
-#########################################################################################
-# Check how many Fake news contain Coronavirus
-coronavirus = ["http://dbpedia.org/resource/Coronavirus","http://dbpedia.org/resource/Coronaviridae",
-               'http://dbpedia.org/resource/SARS_coronavirus','http://dbpedia.org/resource/Severe_acute_respiratory_syndrome',
-               "http://dbpedia.org/resource/SARS_virus","http://dbpedia.org/resource/SARS-CoV",
-               "http://dbpedia.org/resource/Severe_acute_respiratory_syndrom_coronavirus",
-               "http://dbpedia.org/resource/Sars_virus",
-               "http://dbpedia.org/resource/Severe_acute_respiratory_syndrome_coronavirus",
-               "http://dbpedia.org/resource/SARS_CoV",
-               "http://dbpedia.org/resource/SARS-associated_coronavirus"]
-
-
-n_corona = 0
-for k in range(len(FALSE_test_news)):
-    if set(coronavirus) & set(list(FALSE_test_news[k]["ENs"])):
-        n_corona+=1
-# 12/28 old processing
-# 28/28 new processing
-
-# Check how many news in knowledge graph contain Coronavirus
-datelist_all = pd.date_range(start="2020-02-18",end="2020-04-01",freq="D").strftime("%Y-%m-%d")
-columns = ["percentage","n_total"]
-df_n_covid = pd.DataFrame(index=datelist_all,columns=columns)
-df_n_covid.index.name = "Date"
-for i in range(0,len(datelist_all)):
-    n_corona = 0
-    date_loop = datelist_all[i]
-    ## Reading the original graph before performing any filter
-    d_original = kg.get_sentiments_magic_method(date_loop)
-    ## deepcopy of the original dictionary to make changes in it
-    d = dict(d_original)
-    n_total = len(d)
-
-    for news in list(d.keys()):
-        #print(set(d[news]['ENs']))
-        if set(coronavirus) & set(d[news]['ENs']):
-            n_corona += 1
-
-    df_n_covid.loc[date_loop,"percentage"] = n_corona/n_total
-    df_n_covid.loc[date_loop, "n_total"] = n_total
-    print(i)
-
-
-print(df_n_covid)
-df_n_covid.to_csv('percentage_covid_newprocessing.csv', index=True)
-# % of news containing ENs about coronavirus per day
-
-# Tenemos datos desde 2020-02-18 hasta 2020-03-19
-
 
 
 #########################################################################################
@@ -172,7 +116,7 @@ def testing_news_all_values(d, test_news, threshold_prob_fake, min_common_en, co
 ####               We load the news              ####
 #####################################################
 ## path of test news to read
-path = '../kraken-snd/classifier/experiments/covid/covid_falsas_nuevo'
+path = '../experiments/covid/covid_falsas_nuevo'
 list_test_news=read_directory_dictionary(path)
 
 ## Processing the TRUE test news
@@ -221,18 +165,12 @@ df_covid_fake.to_csv(path_save,na_rep='')
 ######                           EXPERIMENT WITH TRUE NEWS                         ######
 #########################################################################################
 ## path of test news to read
-path = '../kraken-snd/classifier/experiments/covid/verdaderas_carmensiemprecovid1530_nuevo' #verdaderas_carmensiemprecovid_nuevosdias_nuevo
+path = '../experiments/covid/verdaderas_carmensiemprecovid1530_nuevo'  #verdaderas_carmensiemprecovid_nuevosdias_nuevo
 list_test_news=read_directory_dictionary(path)
-# verdaderas_carmensiemprecovid_nuevo son 10 noticias los días:
-# '2020-02-18', '2020-02-24', '2020-03-01', '2020-03-07', '2020-03-13', '2020-03-19'
-# verdaderas_carmensiemprecovid1530_nuevo los 6 dias de antes
-
-# verdaderas_carmensiemprecovid_nuevosdias_nuevo son 10 noticias los días:
-# '2020-02-18', '2020-02-25', '2020-03-03', '2020-03-10', '2020-03-17'
 
 ## Processing the TRUE test news
 #TRUE_test_news = list_test_news
-TRUE_test_news = [value for value in list_test_news.values()] #lo pongo así porque tienen otro formato
+TRUE_test_news = [value for value in list_test_news.values()]
 
 # Range of dates to evaluate true news
 #datelist = pd.date_range(start="2020-02-18",end="2020-03-19",freq="6D").strftime("%Y-%m-%d") # verdaderas_carmensiemprecovid_nuevo
@@ -242,23 +180,6 @@ TRUE_test_news = [value for value in list_test_news.values()] #lo pongo así por
 datelist = ['2020-02-18', '2020-02-24', '2020-03-01', '2020-03-07', '2020-03-13', '2020-03-19','original_date']
 # Datelist for verdaderas_carmensiemprecovid_nuevosdias_nuevo
 # datelist = ['2020-02-18', '2020-02-25', '2020-03-03', '2020-03-10', '2020-03-17','original_date']
-
-
-# To check if Coronavirus is an EN in all the true news
-# list_corona = []
-# n_corona = 0
-# for k in range(len(TRUE_test_news)):
-#     if set(coronavirus) & set(list(TRUE_test_news[k]["ENs"])):
-#         n_corona += 1
-#         list_corona.append("1")
-#     else:
-#         list_corona.append("0")
-
-
-
-### To delete the test true news from the kwoledge graph
-#for i in TRUE_test_news.keys(): #we remove from d the test true news in TRUE_test_news
-#     d.pop(i, None)
 
 
 # We create dataframe to save results
@@ -302,77 +223,4 @@ for i in range(0,len(datelist)-1):
 
 path_save=os.getcwd()+'/classifier/experiments/covid/results/prob_covid_true_newProcessing_6days_comp1is1_other10more.csv' #prob_covid_true_newProcessing_5days_comp1is1.csv
 df_covid_true.to_csv(path_save,na_rep='')
-
-
-
-#########################################################################################
-######                    EXPERIMENT WITH ONE TRUE NEWS FROM KB                    ######
-#########################################################################################
-
-NEO4J_HOST = os.getenv('NEO4J_HOST', default='bolt://localhost:7687')
-NEO4J_USER = os.getenv('NEO4J_USER', default='neo4j')
-NEO4J_PASS = os.getenv('NEO4J_PASS', default='')
-
-kg = KnowledgeGraph(NEO4J_HOST, NEO4J_USER, NEO4J_PASS)
-date='2020-03-19'
-
-## Reading the original graph before performing any filter
-d_original = kg.get_sentiments_magic_method(date)
-## deepcopy of the original dictionary to make changes in it
-d = dict(d_original)
-
-
-datelist = ['2020-02-18', '2020-02-24', '2020-03-01', '2020-03-07', '2020-03-13','2020-03-19','original_date']
-news=['https://news.slashdot.org/story/20/03/19/0232245/what-happens-if-the-us-does-absolutely-nothing-to-combat-covid-19',
-      'https://news.yahoo.com/italy-set-prolong-anti-coronavirus-084600570.html',
-      'https://thenextweb.com/?p=1279424',
-      'https://www.androidcentral.com/amazon-shuts-down-nyc-warehouse-after-worker-tests-positive-coronavirus',
-      'https://www.businessinsider.com/novel-coronavirus-lockdown-preventive-isolation-protective-equipment-gear-2020-3',
-      'https://www.businessinsider.com/coronavirus-could-make-florida-like-an-uber-italy-demographer-says-2020-3',
-      'https://news.yahoo.com/asia-contained-coronavirus-home-now-110015510.html',
-      'https://www.businessinsider.com/italy-surpasses-china-highest-coronavirus-death-toll-2020-3',
-      'https://tech.slashdot.org/story/20/03/19/1830210/netflix-to-reduce-eu-bandwidth-by-25']
-
-list_test_news={your_key: d[your_key] for your_key in news }
-TRUE_test_news = [value for value in list_test_news.values()]
-
-
-# We create dataframe to save results
-columns = datelist
-name_true = list_test_news.keys()
-df_covid_true = pd.DataFrame(index=name_true,columns=columns)
-df_covid_true.index.name = "TrueNews"
-
-for i in range(0,len(datelist)-1):
-     print(i)
-     date_loop = datelist[i]
-
-     ## Reading the original graph before performing any filter
-     d_original = kg.get_sentiments_magic_method(date_loop)
-     #d_original = kg.get_sentiments_magic_method(date_loop, delta_days=2)
-     d = dict(d_original)
-     print(len(d))
-
-     for j in list_test_news.keys():
-         if j in d:
-             print(j)
-             df_covid_true.loc[j, 'original_date'] = date_loop #we save the original date of the true news
-             d.pop(j, None) # we remove from d the test true news in TRUE_test_news
-
-     print(len(d))
-
-     min_common_en = 1
-     component_selector = [1, 1, 1, 1, 1, 1, 0]
-     Dice_intersection__intensity = 4
-
-     ## Obtaining probabilities for fake for the FALSE test news
-     fp, tn, predictions_Fake_True_news, predictions_Fake_value_True_news = testing_news_all_values(d, TRUE_test_news,
-                                                                                         0,
-                                                                                         min_common_en,
-                                                                                         component_selector,
-                                                                                         Dice_intersection__intensity)
-
-     df_covid_true.loc[:,date_loop] = predictions_Fake_value_True_news
-
-     path_save = os.getcwd() + '/classifier/experiments/covid/results/prueba1.csv'  # prob_covid_true_newProcessing_5days_comp1is1.csv
 
